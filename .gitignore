@@ -1,0 +1,22 @@
+.next
+node_modules
+*.log
+yarn.lock
+package-lock.json
+config
+
+# dependencies
+/node_modules
+
+# testing
+/coverage
+
+# production
+/build
+/dist
+
+# misc
+.DS_Store
+.env.**
+*.db
+
