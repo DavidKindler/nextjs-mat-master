@@ -26,7 +26,7 @@ const typeDefs = gql`
     appId: ID!
   }
   type User {
-    id: ID!
+    id: ID!git st
     email: String!
     username: String
     provider: String
