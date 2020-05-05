@@ -1,11 +1,11 @@
 import { ApolloServer, gql } from 'apollo-server-micro'
 import Cors from 'micro-cors'
 // import knex from "knex";
-const { Models } = require('../../lib/db')
+const { Models, Op } = require('../../lib/db')
 
 const typeDefs = gql`
   type Query {
-    apps: [App]
+    apps(input: AppInput): [App]
     roles: [Role]
     users: [User]
   }
@@ -14,6 +14,9 @@ const typeDefs = gql`
     id: ID!
     app: String!
     url: String
+  }
+  input AppInput {
+    name: String!
   }
 
   type Role {
@@ -32,8 +35,17 @@ const typeDefs = gql`
 
 const resolvers = {
   Query: {
-    apps: async (_parent, args, _context) => {
-      return await _context.Models.Apps.findAll()
+    apps: async (_parent, { input }, _context) => {
+      console.log('args', input)
+      if (input && input.name) {
+        return await _context.Models.Apps.findAll({
+          where: {
+            app: input.name
+          }
+        })
+      } else {
+        return await _context.Models.Apps.findAll()
+      }
     },
     roles: async (_parent, args, _context) => {
       return await _context.Models.Roles.findAll()
