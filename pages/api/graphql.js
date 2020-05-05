@@ -1,7 +1,7 @@
 import { ApolloServer, gql } from 'apollo-server-micro'
 import Cors from 'micro-cors'
 const Sequelize = require('sequelize')
-// import DataLoader from 'dataloader'
+import DataLoader from 'dataloader'
 // import knex from "knex";
 const {
   getAppsAndRoles,
@@ -13,10 +13,44 @@ const {
   ROLES
 } = require('../../lib/db')
 
-// const db = knex({
-//   client: "pg",
-//   connection: process.env.PG_CONNECTION_STRING
-// });
+// export default (req, res) => {
+//   res.status(200).json({ text: 'Hello graphql' })
+// }
+
+const typeDefs = gql`
+  type Query {
+    apps: [App]
+    roles: [Role]
+  }
+
+  type App {
+    id: ID!
+    app: String!
+    url: String
+  }
+
+  type Role {
+    id: ID!
+    app: String!
+    role: String!
+    appId: ID!
+  }
+`
+
+const resolvers = {
+  Query: {
+    apps: async () => {
+      return await Apps.findAll()
+    },
+    roles: async () => {
+      return await Roles.findAll()
+    }
+  }
+  // apps: async (_parent, args, _context) => {
+  //   return await Apps.findAll()
+  // }
+  // }
+}
 
 // const typeDefs = gql`
 //   type Query {
@@ -75,33 +109,46 @@ const {
 // }
 
 // const loader = {
-//   artist: new DataLoader(ids =>
-//     db
-//       .select('*')
-//       .from('artists')
-//       .whereIn('id', ids)
-//       .then(rows => ids.map(id => rows.find(row => row.id === id)))
-//   )
+//   apps: new DataLoader(() => {
+//     return [
+//       {
+//         id: '123',
+//         app: 'App Name',
+//         url: 'http://goobar'
+//       },
+//       {
+//         id: '234',
+//         app: 'foobar',
+//         url: 'http://foobar'
+//       }
+//     ]
+//   })
 // }
 
-// const cors = Cors({
-//   allowMethods: ['GET', 'POST', 'OPTIONS']
-// })
-
-// const apolloServer = new ApolloServer({
-//   typeDefs,
-//   resolvers,
-//   context: () => {
-//     return { loader }
-//   }
-// })
-
-// const handler = apolloServer.createHandler({ path: '/api/graphql' })
-
-// export const config = {
-//   api: {
-//     bodyParser: false
-//   }
+// const loader = {
+//   apps: new DataLoader(async () => {
+//     return await Apps.findAll()
+//   })
 // }
 
-// export default cors(handler)
+const cors = Cors({
+  allowMethods: ['GET', 'POST', 'OPTIONS']
+})
+
+const apolloServer = new ApolloServer({
+  typeDefs,
+  resolvers
+  // context: () => {
+  //   return { loader }
+  // }
+})
+
+const handler = apolloServer.createHandler({ path: '/api/graphql' })
+
+export const config = {
+  api: {
+    bodyParser: false
+  }
+}
+
+export default cors(handler)
