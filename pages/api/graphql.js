@@ -56,7 +56,7 @@ const typeDefs = gql`
     id: ID!
     app: String!
     role: String!
-    appId: ID!
+    # appId: ID!
   }
 
   type User {
@@ -72,9 +72,10 @@ const typeDefs = gql`
     userId: ID!
     username: String!
     email: String
-    app: String!
+    # app: String!
     url: String
-    role: String
+    # role: String
+    role: Role!
   }
 `
 
@@ -166,11 +167,20 @@ const resolvers = {
       }
     },
     user: async (_parent, { input }, _context) => {
+      console.log('user => a rights')
       return await _context.Models.Users.findOne({
         include: [{ model: _context.Models.Rights }],
         where: {
           id: input.id
         }
+      })
+    }
+  },
+  Right: {
+    role: async (role, __, _context) => {
+      console.log('right => a role')
+      return await _context.Models.Rights.findOne({
+        where: { userId: role.userId }
       })
     }
   }

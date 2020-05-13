@@ -1,16 +1,17 @@
-import { Layout } from 'antd'
 import Head from 'next/head'
+import { Layout } from 'antd'
 import { getConfigData } from '../lib/getConfigData'
 import DefaultLayout from '../components/layout'
 
 export default ({ allConfigData }) => {
   return (
-    <DefaultLayout page={'home'}>
+    <DefaultLayout page={'config'}>
       <Head>
-        <title>Home Page</title>
+        <title>Config `Page</title>
       </Head>
       <Layout>
-        <h2>Home page here</h2>
+        <h2>Example using local json file with initial settings </h2>
+        <div>JSON DATA::: {JSON.stringify(allConfigData)}</div>
       </Layout>
     </DefaultLayout>
   )

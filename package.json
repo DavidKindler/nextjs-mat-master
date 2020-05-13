@@ -14,7 +14,7 @@
     "dataloader": "^2.0.0",
     "micro-cors": "^0.1.1",
     "mysql2": "^2.1.0",
-    "next": "latest",
+    "next": "^9.4.0",
     "pouchdb": "^7.2.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
