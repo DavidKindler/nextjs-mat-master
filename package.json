@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "next",
+    "salt": "cross-env NODE_ENV=test node ./lib/db",
     "build": "next build",
     "start": "next start",
     "pouchdb-server": "pouchdb-server --dir pouchdb/master/"
@@ -14,8 +15,10 @@
     "dataloader": "^2.0.0",
     "micro-cors": "^0.1.1",
     "mysql2": "^2.1.0",
+    "nedb": "^1.8.0",
+    "nedb-promise": "^2.0.1",
+    "nedb-promises": "^4.0.3",
     "next": "^9.4.0",
-    "pouchdb": "^7.2.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "sequelize": "^5.21.7",
@@ -24,7 +27,7 @@
   },
   "license": "ISC",
   "devDependencies": {
-    "pouchdb-server": "^4.2.0",
+    "cross-env": "^7.0.2",
     "sass": "^1.26.5"
   }
 }

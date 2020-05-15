@@ -6,42 +6,16 @@ module.exports = (sequelize, type) =>
       defaultValue: type.UUIDV4,
       allowNull: false
     },
-    email: {
-      type: type.STRING,
-      allowNull: true,
-      validate: {
-        isEmail: true
-      }
+    appId: {
+      type: type.UUID,
+      allowNull: false
     },
-    username: {
-      type: type.STRING,
-      allowNull: true
+    userId: {
+      type: type.UUID,
+      allowNull: false
     },
-    app: {
-      type: type.STRING,
-      allowNull: true,
-      default: null,
-      set (value) {
-        // Storing passwords in plaintext in the database is terrible.
-        // Hashing the value with an appropriate cryptographic hash function is better.
-        console.log('app value', value)
-        return value ? this.setDataValue('app', value.toUpperCase()) : null
-      }
-    },
-    url: {
-      type: type.STRING,
-      allowNull: true,
-      default: null
-    },
-    role: {
-      type: type.STRING,
-      allowNull: true,
-      default: null,
-      set (value) {
-        // Storing passwords in plaintext in the database is terrible.
-        // Hashing the value with an appropriate cryptographic hash function is better.
-        console.log('role value', value)
-        return value ? this.setDataValue('role', value.toUpperCase()) : null
-      }
+    roleId: {
+      type: type.UUID,
+      allowNull: false
     }
   })
