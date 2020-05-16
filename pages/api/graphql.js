@@ -1,12 +1,13 @@
 import { ApolloServer, gql } from 'apollo-server-micro'
 import Cors from 'micro-cors'
-const { Models, Op } = require('../../lib/db')
+const { db } = require('../../lib/nedb')
 
 const typeDefs = gql`
   type Query {
     apps: [App]
     app(input: AppInput!): App
-    roles: [Role]
+    rolesUnique: [String]
+    rolesForApp(input: AppInput): Roles
     users: [User]
     user(input: UserInput!): User
   }
@@ -18,10 +19,10 @@ const typeDefs = gql`
   }
 
   type App {
-    id: ID!
+    _id: ID!
     app: String!
     url: String
-    roles: [Role]
+    roles: [String]
   }
 
   input NewAppInput {
@@ -35,7 +36,7 @@ const typeDefs = gql`
   }
 
   input EditAppUrlInput {
-    id: ID!
+    _id: ID!
     url: String!
   }
 
@@ -45,12 +46,11 @@ const typeDefs = gql`
   }
 
   input AppInput {
-    id: ID
     app: String
   }
 
   input UserInput {
-    id: ID!
+    username: String!
   }
 
   input NewUserInput {
@@ -60,16 +60,13 @@ const typeDefs = gql`
   }
 
   input NewUserRights {
-    id: ID!
+    _id: ID!
     rights: NewRightInput!
   }
 
-  type Role {
-    id: ID!
-    appId: ID!
-    apps: [App]
-    role: String!
-    # users: [User]
+  type Roles {
+    app: String!
+    roles: [String]
   }
 
   input RoleInput {
@@ -78,7 +75,7 @@ const typeDefs = gql`
   }
 
   type User {
-    id: ID!
+    _id: ID!
     email: String!
     username: String
     provider: String
@@ -86,16 +83,12 @@ const typeDefs = gql`
   }
 
   type Right {
-    id: ID!
-    appId: ID!
-    userId: ID!
     app: String
     role: String
   }
 
   input NewRightInput {
-    appId: ID!
-    userId: ID!
+    app: String!
     role: String!
   }
 `
@@ -103,165 +96,85 @@ const typeDefs = gql`
 const resolvers = {
   Mutation: {
     newApp: async (_parent, { input }, _context) => {
-      return await _context.Models.Apps.findOrCreate({
-        where: { app: input.app },
-        include: [{ model: _context.Models.Roles }],
-        defaults: {
-          app: input.app,
-          url: input.url,
-          roles: [
-            { app: input.app, role: 'ADMIN' },
-            { app: input.app, role: 'USER' }
-          ]
-        }
-      }).spread((app, created) => {
-        if (created) {
-          return _context.Models.Apps.findAll({
-            include: [{ model: _context.Models.Roles }],
-            order: [
-              [{ model: _context.Models.Roles, as: 'Roles' }, 'role', 'ASC']
-            ]
-          })
-        } else {
-          return new Error('app already exists')
-        }
-      })
+      return await _context.db.insert(appToAdd)
     },
     editAppUrl: async (_parent, { input }, _context) => {
-      return await _context.Models.Apps.update(
-        {
-          url: input.url
-        },
-        {
-          where: { id: input.id }
-        }
-      ).then(async () => {
-        return await _context.Models.Apps.findAll({
-          include: [{ model: _context.Models.Roles }],
-          order: [
-            [{ model: _context.Models.Roles, as: 'Roles' }, 'role', 'ASC']
-          ]
-        })
-      })
+      return await _context.db.update(
+        { _id: input._id },
+        { $set: { url: input.url } },
+        { returnUpdatedDocs: true }
+      )
     },
     newUser: async (_parent, { input }, _context) => {
-      return await _context.Models.Users.findOrCreate({
-        where: { email: input.email },
-        defaults: {
-          email: input.email,
-          username: input.username,
-          provider: input.provider
-        }
-      }).spread((user, created) => {
-        if (created) {
-          return user
-        } else {
-          return new Error('user already exists')
-        }
-      })
+      return await _context.db.insert(input)
     },
     updateUserRights: async (_parent, { input }, _context) => {
       console.log('input is ', JSON.stringify(input, null, 2))
-      return await _context.Models.Rights.findOrCreate({
-        where: { userId: input.id, appId: input.rights.appId },
-        defaults: {
-          userId: input.rights.userId,
-          appId: input.rights.appId,
-          role: input.rights.role
-        }
-      }).spread((rights, created) => {
-        if (created) {
-          return rights
-        } else {
-          return new Error('rights already exists')
-        }
-      })
+      return await _context.db.update(
+        { _id: input._id },
+        { $set: { rights: input.rights } }
+      )
     }
   },
   Query: {
     apps: async (_parent, { input }, _context) => {
-      if (input && input.name) {
-        return await _context.Models.Apps.findAll({
-          include: [{ model: _context.Models.Roles }],
-          where: {
-            app: input.name
-          }
-        })
-      } else {
-        return await _context.Models.Apps.findAll({
-          include: [{ model: _context.Models.Roles }]
-        })
-      }
+      return await _context.db.find({ app: { $exists: true } })
     },
 
     app: async (_parent, { input }, _context) => {
-      let id = input.id ? input.id : null
-      let app = input.app ? input.app : null
-      return await _context.Models.Apps.findOne({
-        where: {
-          [Op.or]: [{ id: id }, { app: app }]
-        }
-      })
+      return await _context.db.findOne({ app: input.app })
     },
-    roles: async (_parent, args, _context) => {
-      return await _context.Models.Roles.findAll()
+    rolesUnique: async (_parent, { input }, _context) => {
+      let x = await db.find({ roles: { $exists: true } })
+      let r = x.flatMap(y => y.roles)
+      var uniqueRoles = Array.from(new Set(r))
+      return uniqueRoles
+    },
+    rolesForApp: async (_parent, { input }, _context) => {
+      let x = await db.find({ app: input.app })
+      let r = x.flatMap(y => y.roles)
+      var uniqueRoles = Array.from(new Set(r))
+      return { app: input.app, roles: uniqueRoles }
     },
     users: async (_parent, { input }, _context) => {
-      if (input && input.id) {
-        return await _context.Models.Users.findAll({
-          include: [{ model: _context.Models.Rights }],
-          where: {
-            id: input.id
-          }
-        })
-      } else {
-        return await _context.Models.Users.findAll({
-          include: [{ model: _context.Models.Rights }]
-        })
-      }
+      return await db.find({ username: { $exists: true } })
     },
     user: async (_parent, { input }, _context) => {
-      console.log('user => a rights')
-      return await _context.Models.Users.findOne({
-        include: [{ model: _context.Models.Rights }],
-        where: {
-          id: input.id
-        }
-      })
+      return await _context.db.findOne({ username: input.username })
     }
-  },
-  App: {
-    roles: async (app, __, _context) => {
-      console.log('app=>roles')
-      return await _context.Models.Roles.findAll({
-        where: { appId: app.id }
-      })
-    }
-  },
-  Right: {
-    role: async (role, __, _context) => {
-      console.log('right => a role')
-      return await _context.Models.Roles.findOne({
-        where: { userId: role.userId }
-      })
-    }
-  },
-  Role: {
-    apps: async (role, __, _context) => {
-      console.log('role ==> apps')
-      return await _context.Models.Apps.findAll({
-        // include: [{ model: _context.Models.Rights }],
-        where: { id: role.appId }
-      })
-    }
-    // users: async (role, __, _context) => {
-    //   console.log('role ==> users', role)
-    //   return await _context.Models.Users.findAll({
-    //     include: [{ model: _context.Models.Rights }]
-    //     // where: { id: role.userId }
-    //   })
-    // }
   }
+  // App: {
+  //   roles: async (app, __, _context) => {
+  //     console.log('app=>roles')
+  //     return await _context.Models.Roles.findAll({
+  //       where: { appId: app.id }
+  //     })
+  //   }
+  // },
+  // Right: {
+  //   role: async (role, __, _context) => {
+  //     console.log('right => a role')
+  //     return await _context.Models.Roles.findOne({
+  //       where: { userId: role.userId }
+  //     })
+  //   }
+  // },
+  // Role: {
+  //   apps: async (role, __, _context) => {
+  //     console.log('role ==> apps')
+  //     return await _context.Models.Apps.findAll({
+  //       // include: [{ model: _context.Models.Rights }],
+  //       where: { id: role.appId }
+  //     })
+  //   }
+  //   // users: async (role, __, _context) => {
+  //   //   console.log('role ==> users', role)
+  //   //   return await _context.Models.Users.findAll({
+  //   //     include: [{ model: _context.Models.Rights }]
+  //   //     // where: { id: role.userId }
+  //   //   })
+  //   // }
+  // }
 }
 
 const cors = Cors({
@@ -272,7 +185,7 @@ const apolloServer = new ApolloServer({
   typeDefs,
   resolvers,
   context: () => {
-    return { Models }
+    return { db }
   }
 })
 

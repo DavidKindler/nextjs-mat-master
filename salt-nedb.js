@@ -1,4 +1,16 @@
 const { db, crud } = require('./lib/nedb')
+const removeFile = filename => {
+  try {
+    if (fs.existsSync(filename)) {
+      fs.unlink(filename, function (err) {
+        if (err) throw err
+        console.log(`${filename} was deleted`)
+      })
+    }
+  } catch (err) {
+    console.error(err)
+  }
+}
 
 if (process.env.NODE_ENV !== 'production') {
   initConfig = require('./config/db.config.dev')
@@ -75,63 +87,68 @@ const SaltDB = dbConfig => {
   })
 }
 
-SaltDB(initConfig)
+// SaltDB(initConfig)
 async function doDatabaseStuff () {
-  let getItems = await crud.find()
-  console.log('getItems', getItems)
-  console.log('')
+  // let getItems = await crud.find()
+  // console.log('getItems', getItems)
+  // console.log('')
 
-  let getUsers = await db.find({ username: { $exists: true } })
-  console.log('getUsers', getUsers)
-  console.log('')
+  // let getUsers = await db.find({ username: { $exists: true } })
+  // console.log('getUsers', getUsers)
+  // console.log('')
 
-  let getApp = await db.findOne({ app: 'MASTER' })
-  console.log('getApp', getApp)
-  console.log('')
+  // let getApp = await db.findOne({ app: 'MASTER' })
+  // console.log('getApp', getApp)
+  // console.log('')
 
-  let addApp = await db.insert({ app: 'foobar', url: 'http://foobar.com' })
-  console.log('addApp', addApp)
-  console.log('')
+  // let addApp = await db.insert({ app: 'foobar', url: 'http://foobar.com' })
+  // console.log('addApp', addApp)
+  // console.log('')
 
-  let getApps = await db.find({ app: { $exists: true } })
-  console.log('getApps', getApps)
-  console.log('')
+  // let getApps = await db.find({ app: { $exists: true } })
+  // console.log('getApps', getApps)
+  // console.log('')
 
-  let addApp2 = await db
-    .insert({ app: 'foobar', url: 'http://foobar.com' })
-    .catch(err => {
-      if (err.errorType == 'uniqueViolated') return 'already exists'
-      return err
-    })
-  console.log('addApp', addApp2)
-  console.log('')
+  // let addApp2 = await db
+  //   .insert({ app: 'foobar', url: 'http://foobar.com' })
+  //   .catch(err => {
+  //     if (err.errorType == 'uniqueViolated') return 'already exists'
+  //     return err
+  //   })
+  // console.log('addApp', addApp2)
+  // console.log('')
 
-  let editApp = await db
-    .update(
-      { app: 'foobar' },
-      { $set: { url: 'http://newfoobar.com' } },
-      { returnUpdatedDocs: true }
-    )
-    .then(docs => docs)
-    .catch(err => {
-      // if (err.errorType == 'uniqueViolated') return 'already exists'
-      return err
-    })
-  console.log('editApp', editApp)
-  console.log('')
+  // let editApp = await db
+  //   .update(
+  //     { app: 'foobar' },
+  //     { $set: { url: 'http://newfoobar.com' } },
+  //     { returnUpdatedDocs: true }
+  //   )
+  //   .then(docs => docs)
+  //   .catch(err => {
+  //     // if (err.errorType == 'uniqueViolated') return 'already exists'
+  //     return err
+  //   })
+  // console.log('editApp', editApp)
+  // console.log('')
 
-  let editApp2 = await db
-    .update(
-      { app: 'foobar' },
-      { $set: { app: 'newfoobar' } },
-      { returnUpdatedDocs: true }
-    )
-    .then(docs => docs)
-    .catch(err => {
-      // if (err.errorType == 'uniqueViolated') return 'already exists'
-      return err
-    })
-  console.log('editApp2', editApp2)
+  // let editApp2 = await db
+  //   .update(
+  //     { app: 'foobar' },
+  //     { $set: { app: 'newfoobar' } },
+  //     { returnUpdatedDocs: true }
+  //   )
+  //   .then(docs => docs)
+  //   .catch(err => {
+  //     // if (err.errorType == 'uniqueViolated') return 'already exists'
+  //     return err
+  //   })
+  // console.log('editApp2', editApp2)
+  // let r = []
+  let x = await db.find({ roles: { $exists: true } })
+  let r = x.flatMap(y => y.roles)
+  var uniqueRoles = Array.from(new Set(r))
+  console.log('roles', uniqueRoles)
   console.log('')
   await db.persistence.compactDatafile()
 }
