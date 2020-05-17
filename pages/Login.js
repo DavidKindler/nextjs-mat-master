@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import AuthHelper from '../auth/AuthHelper'
 import { Form, Button, Card, Alert, Spin } from 'antd'
+import Router from 'next/router'
 import {
   // HomeOutlined,
   // SettingFilled,

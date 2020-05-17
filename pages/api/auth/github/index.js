@@ -43,7 +43,15 @@ passport.use(
 
 const findGithubUserOrCreate = (profile, done) => {
   console.log('gh profile passed ==>', profile)
+  // console.log('profile to be passed in to callback function==>', done)
   const username = profile.username ? profile.username : profile.email
+  profile = {
+    username: 'foo',
+    email: 'foo@goo.com',
+    provider: 'GITHUB'
+  }
+  done(null, profile, `new github user was registered`)
+
   // console.log('UrlObj3 exists?', UrlObj)
   // const appUrl = normalizeUrl(UrlObj.query.redirect) || null
   // console.log('assign Rights to username==>', username, appUrl)
@@ -115,8 +123,8 @@ export default (req, res) => {
   console.log('github authenticate route / called now')
   let appurl = req.query.appurl
   let redirecturl = req.query.redirecturl || req.query.appurl
-  console.log('redirecturl', redirecturl)
-  console.log('appurl', appurl)
+  console.log('redirecturl1', redirecturl)
+  console.log('appurl1', appurl)
 
   passport.authenticate(
     'github',
@@ -132,10 +140,16 @@ export default (req, res) => {
       // console.log('custom callback err::', err)
       // console.log('custom callback user::', user)
       // console.log('custom callback info::', info)
-      // if (err) { return next(err) }
-      // if (!user) { return res.redirect('/login') }
+      // if (err) {
+      //   return next(err)
+      // }
+      // if (!user) {
+      //   return res.redirect('/login')
+      // }
       // req.logIn(user, function (err) {
-      //   if (err) { return next(err) }
+      //   if (err) {
+      //     return next(err)
+      //   }
       //   return res.redirect('/protected')
       // })
     }
