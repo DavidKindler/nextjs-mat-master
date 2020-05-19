@@ -1,29 +1,54 @@
 const passport = require('passport')
 const normalizeUrl = require('normalize-url')
 const generateToken = require('../../../../lib/generateToken')
-import { useRouter } from 'next/router'
+const GitHubStrategy = require('passport-github2').Strategy
+const sendMail = require('../../../../lib/sendEmail')
+const { db } = require('../../../../lib/nedb')
 
-function RedirectPage ({ ctx }) {
-  const router = useRouter()
-  // Make sure we're in the browser
-  if (typeof window !== 'undefined') {
-    router.push('/new/url')
-    return
+export default (req, res) => {
+  passport.serializeUser(function (user, done) {
+    done(null, user)
+  })
+
+  passport.deserializeUser(function (obj, done) {
+    done(null, obj)
+  })
+
+  passport.use(
+    new GitHubStrategy(
+      {
+        clientID: process.env.dev.GITHUB_CLIENT_ID,
+        clientSecret: process.env.dev.GITHUB_CLIENT_SECRET,
+        callbackURL: process.env.dev.GITHUB_CALLBACK_URL
+      },
+      (accessToken, refreshToken, profile, done) => {
+        // console.log('github strategy called with profile', profile)
+        // if you login via github we check to see if you are registered
+        findGithubUserOrCreate(profile, done)
+      }
+    )
+  )
+
+  const findGithubUserOrCreate = async (profile, done) => {
+    console.log('findgithubuser 2')
+    console.log('gh profile passed ==>', profile.email, profile.username)
+    let appurl = req.query.state
+    console.log('appurl is set to==>', appurl)
+    const username = profile.username ? profile.username : profile.email
+
+    let getUser = await db.findOne({ username: username })
+    let app = await db.findOne({ url: appurl })
+
+    console.log('getUser', getUser)
+    console.log('app', app)
+
+    profile = {
+      username: 'foo',
+      email: 'foo@goo.com',
+      provider: 'GITHUB'
+    }
+    done(null, profile, `new github user was registered`)
   }
-}
-
-RedirectPage.getInitialProps = ctx => {
-  // We check for ctx.res to make sure we're on the server.
-  if (ctx.res) {
-    ctx.res.writeHead(302, { Location: '/new/url' })
-    ctx.res.end()
-  }
-  return {}
-}
-
-export default (req, res, next) => {
-  // res.status(200).json({ text: 'github callback' })
-  // }
 
   // router.get('/callback', (req, res, next) => {
   console.log('github callback route /auth/github/callback called now')
@@ -34,11 +59,11 @@ export default (req, res, next) => {
     'github',
     { scope: ['user:email'], state: appurl },
     function (err, profile) {
-      console.log('callback function with profile', profile)
+      // console.log('callback function with profile', profile)
       if (err) {
         // return next(err)
         // createError(500, err)
-        res.writeHead(503)
+        res.status(503).json({ error: err })
         res.end()
       }
       if (profile) {
@@ -61,12 +86,12 @@ export default (req, res, next) => {
           'redirecting now to==>',
           `${appNormalUrl}${
             hasHash ? '' : '/'
-          }authredirect/?redirecturl=${appurl}&token=${token}`
+          }authredirect?redirecturl=${appurl}&token=${token}`
         )
         res.writeHead(302, {
           Location: `${appNormalUrl}${
             hasHash ? '' : '/'
-          }authredirect/?redirecturl=${appurl}&token=${token}`
+          }authredirect?redirecturl=${appurl}&token=${token}`
         })
         res.end()
 
@@ -76,11 +101,11 @@ export default (req, res, next) => {
         //   }authredirect/?redirecturl=${appurl}&token=${token}`
         // )
       } else {
-        // createError(503, 'No Profile')
-        // next(createError(503, 'No profile'))
-        res.writeHead(503)
+        res.status(503).json({ error: 'No profile' })
         res.end()
       }
     }
-  )(req, res)
+  )(req, res, b => {
+    console.log('next2 called again with==>', b)
+  })
 }

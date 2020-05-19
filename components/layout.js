@@ -43,9 +43,9 @@ function DefaultLayout ({ children, page }) {
                 <a>Home</a>
               </Link>
             </Menu.Item>
-            <Menu.Item key='about'>
-              <Link href='/about'>
-                <a>About</a>
+            <Menu.Item key='apps'>
+              <Link href='/apps'>
+                <a>Apps</a>
               </Link>
             </Menu.Item>
             <Menu.Item key='first'>

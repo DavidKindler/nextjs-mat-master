@@ -1,4 +1,7 @@
 const { db, crud } = require('./lib/nedb')
+const path = require('path')
+const fs = require('fs')
+const filename = name => path.join(process.cwd(), `/nedb/${name}.db`)
 const removeFile = filename => {
   try {
     if (fs.existsSync(filename)) {
@@ -11,6 +14,9 @@ const removeFile = filename => {
     console.error(err)
   }
 }
+
+const dbName = 'nedb-users'
+const dbFilename = filename(dbName)
 
 if (process.env.NODE_ENV !== 'production') {
   initConfig = require('./config/db.config.dev')
@@ -40,39 +46,40 @@ function addUser (user) {
 }
 
 const SaltDB = dbConfig => {
+  removeFile(dbFilename)
   addApp({
     app: APPS.MASTER,
-    url: 'http://localhost:2000',
+    url: 'http://localhost:3000',
     roles: [ROLES.ADMIN, 'SUPERADMIN']
   })
 
   addApp({
     app: APPS.RSSNEWS,
-    url: 'http://localhost:3000/#/',
+    url: 'http://localhost:2000/#/',
     roles: [ROLES.ADMIN]
   })
 
   addApp({
     app: APPS.CLIENT1PROTECTED,
-    url: 'http://localhost:3002/protected',
+    url: 'http://localhost:2002/protected',
     roles: [ROLES.USER]
   })
 
   addApp({
     app: APPS.CLIENT1REGISTERED,
-    url: 'http://localhost:3002/registered',
+    url: 'http://localhost:2002/registered',
     roles: [ROLES.USER, ROLES.ADMIN]
   })
 
   addApp({
     app: APPS.CLIENT1ADMIN,
-    url: 'http://localhost:3002/admin',
+    url: 'http://localhost:2002/admin',
     roles: [ROLES.ADMIN]
   })
 
   addApp({
     app: APPS.CLIENT2,
-    url: 'http://localhost:3003',
+    url: 'http://localhost:2003',
     roles: [ROLES.ADMIN, ROLES.USER]
   })
 
@@ -87,11 +94,10 @@ const SaltDB = dbConfig => {
   })
 }
 
-// SaltDB(initConfig)
 async function doDatabaseStuff () {
-  // let getItems = await crud.find()
-  // console.log('getItems', getItems)
-  // console.log('')
+  let getItems = await crud.find()
+  console.log('getItems', getItems)
+  console.log('')
 
   // let getUsers = await db.find({ username: { $exists: true } })
   // console.log('getUsers', getUsers)
@@ -152,5 +158,7 @@ async function doDatabaseStuff () {
   console.log('')
   await db.persistence.compactDatafile()
 }
+
+SaltDB(initConfig)
 
 doDatabaseStuff()
