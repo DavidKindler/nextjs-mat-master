@@ -83,6 +83,14 @@ const SaltDB = dbConfig => {
     roles: [ROLES.ADMIN, ROLES.USER]
   })
 
+  for (let i = 0; i < 1000; i++) {
+    addApp({
+      app: `app_${i}`,
+      url: `http://localhost:${10000 + i}`,
+      roles: ['user']
+    })
+  }
+
   if (!dbConfig || !dbConfig.users) throw Error
   dbConfig.users.forEach(user => {
     addUser({

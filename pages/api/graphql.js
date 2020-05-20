@@ -118,7 +118,7 @@ const resolvers = {
   },
   Query: {
     apps: async (_parent, { input }, _context) => {
-      return await _context.db.find({ app: { $exists: true } })
+      return await _context.db.find({ app: { $exists: true } }).sort({ app: 1 })
     },
 
     app: async (_parent, { input }, _context) => {
