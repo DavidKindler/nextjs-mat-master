@@ -14,8 +14,8 @@ module.exports = {
       API_URL: 'http://localhost:3000'
     },
     prod: {
-      REACT_APP_AUTH_URL: 'http://az84ap07v.am.freescale.net:3000',
-      API_URL: 'http://az84ap07v.am.freescale.net:3000'
+      REACT_APP_AUTH_URL: 'http://localhost:3000',
+      API_URL: 'http://localhost:3000'
     }
   }
 }

@@ -1,0 +1,11 @@
+.correct {
+  /* border: 2px solid green; */
+  border: 2px solid RGBA(40, 206, 81, 0.33);
+}
+.incorrect {
+  border: 2px solid rgba(255, 0, 0, 0.3);
+}
+
+.edit-modal .ant-modal {
+  min-width: 800px;
+}

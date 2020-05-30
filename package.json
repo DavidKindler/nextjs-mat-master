@@ -5,13 +5,17 @@
     "dev": "next",
     "salt": "cross-env NODE_ENV=test node ./lib/db",
     "build": "next build",
-    "start": "next start",
-    "pouchdb-server": "pouchdb-server --dir pouchdb/master/"
+    "start": "next start"
   },
   "dependencies": {
     "@ant-design/icons": "^4.1.0",
+    "@apollo/react-hooks": "^3.1.5",
     "@zeit/next-css": "^1.0.1",
     "antd": "^4.2.0",
+    "apollo-boost": "^0.4.9",
+    "apollo-cache-inmemory": "^1.6.6",
+    "apollo-client": "^2.6.10",
+    "apollo-link-http": "^1.5.17",
     "apollo-server-micro": "^2.12.0",
     "axios": "^0.19.2",
     "dataloader": "^2.0.0",
@@ -34,6 +38,7 @@
     "react-dom": "^16.13.1",
     "sequelize": "^5.21.7",
     "sqlite3": "^4.2.0",
+    "swr": "^0.2.2",
     "uuid": "^8.0.0"
   },
   "license": "ISC",

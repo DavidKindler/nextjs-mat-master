@@ -1,20 +1,71 @@
+import { useState } from 'react'
+import _ from 'lodash'
 import Head from 'next/head'
-import axios from 'axios'
+// import axios from 'axios'
+import { useQuery, useMutation } from '@apollo/react-hooks'
+// import gql from 'graphql-tag'
+import { gql } from 'apollo-boost'
+import AddApp from '../lib/AddApp'
 
 import DefaultLayout from '../components/layout'
-import { Layout, Menu, Table, Tag, Input } from 'antd'
+import { Layout, Menu, Table, Tag, Input, Button } from 'antd'
+
 const { SubMenu } = Menu
 const { Content, Sider } = Layout
+import { PlusCircleOutlined, FilterOutlined } from '@ant-design/icons'
 
-import _ from 'lodash'
 // import AuthHelper from '../auth/AuthHelper'
 // import EditApp from './EditApp'
 // import AddApp from './AddApp'
 // import DeleteApp from './DeleteApp'
 // import CustomError from '../components/CustomError'
 
+const query = gql`
+  query allApps {
+    apps {
+      _id
+      app
+      url
+      roles
+    }
+  }
+`
+
+const ADD_APP = gql`
+  mutation addApp($newApp: NewAppInput!) {
+    newApp(input: $newApp) {
+      _id
+      app
+      url
+      roles
+    }
+  }
+`
+// const apiUrl =
+//   process.env.NODE_ENV === 'production'
+//     ? process.env.prod.API_URL
+//     : process.env.dev.API_URL
+
 const Apps = props => {
-  const { apps } = props
+  const [appnameInput, setAppnameInput] = useState('')
+  const [filteredApps, setFilteredApps] = useState([])
+  const [modal, setModal] = useState({ state: false, Component: null })
+  const { data, loading, error } = useQuery(query, {
+    onCompleted: () => {
+      setFilteredApps(data.apps)
+    }
+  })
+  const [addAppToDB, { results, loadingApp, errorAddApp }] = useMutation(
+    ADD_APP
+  )
+
+  // const [apps, setApps] = useState(props.data.apps)
+  const ALL_APPS = loading ? [] : data.apps
+
+  // console.log('data', data)
+  // console.log('apps', apps)
+  // console.log('roles', roles)
+  // console.log('filteredApps', filteredApps)
   const columns = [
     {
       title: 'app',
@@ -89,19 +140,74 @@ const Apps = props => {
     }
   ]
 
-  let render = apps.length > 0 && (
-    <Table
-      // onClick={tableHandler}
-      columns={columns}
-      dataSource={apps}
-      rowKey={record => record._id}
-    />
-  )
+  const findApp = e => {
+    setAppnameInput(e.target.value)
+    let results = _.filter(ALL_APPS, o => {
+      return _.includes(o.app.toUpperCase(), e.target.value.toUpperCase())
+    })
+    setFilteredApps(results)
+  }
 
+  const filterApps = async app => {
+    const result = _.filter(ALL_APPS, app)
+    setFilteredApps(result)
+    setAppnameInput('')
+  }
+
+  const showAllApps = () => {
+    setFilteredApps(ALL_APPS)
+    setAppnameInput('')
+  }
+
+  const onCancel = () => {
+    setModal({ state: false, Component: null })
+  }
+  const onSubmit = (query, input) => {
+    console.log('query', query)
+    console.log('input', input)
+    setModal({ state: false, Component: null })
+    addAppToDB(input)
+  }
+
+  const addAppHandler = () => {
+    setModal({
+      state: true,
+      Component: <AddApp onCancel={onCancel} onSubmit={onSubmit} />
+    })
+    console.log('add app with')
+  }
+
+  let render = () => {
+    if (loading) {
+      return <h1>Loading...</h1>
+    }
+    if (error) {
+      return <h1>{error}</h1>
+    }
+    console.log('filteredApps', filteredApps)
+    return (
+      <Table
+        columns={columns}
+        dataSource={filteredApps}
+        rowKey={record => record._id}
+      />
+    )
+  }
+
+  if (modal.state) {
+    return (
+      <DefaultLayout page={'apps'}>
+        <Head>
+          <title>Add New App</title>
+        </Head>
+        <Layout>{modal.Component}</Layout>
+      </DefaultLayout>
+    )
+  }
   return (
     <DefaultLayout page={'apps'}>
       <Head>
-        <title>About page</title>
+        <title>Master/Apps</title>
       </Head>
       <Layout>
         <Sider width={200} style={{ background: '#fff' }}>
@@ -112,35 +218,37 @@ const Apps = props => {
             style={{ height: '100%', borderRight: 0 }}
           >
             <div style={{ padding: '10px' }}>
-              {/* <AddApp handleParent={handleParentState} /> */}
+              <Button onClick={addAppHandler} block>
+                Add App <PlusCircleOutlined />
+              </Button>
             </div>
             <div style={{ padding: '10px' }}>
               <Input
                 size='large'
-                // onChange={findApp}
+                onChange={findApp}
                 placeholder='Find App'
-                // value={appnameInput}
-                value={'app name'}
+                value={appnameInput}
               />
             </div>
 
-            {/* <Menu.Item key='all-apps' onClick={showAllApps}> */}
-            <Menu.Item key='all-apps'>
-              {/* <Icon type='user' /> */}
+            <Menu.Item key='all-apps' onClick={showAllApps}>
               <span>All Apps</span>
             </Menu.Item>
 
             <SubMenu
               key='sub2'
-              title={<span>{/* <Icon type='filter' /> Applications */}</span>}
+              // title={<span>{/* <Icon type='filter' /> Applications */}</span>}
+              title={
+                <span>
+                  <FilterOutlined />
+                  Applications
+                </span>
+              }
             >
-              {apps &&
-                apps.map(app => {
+              {ALL_APPS &&
+                ALL_APPS.map(app => {
                   return (
-                    <Menu.Item
-                      key={app._id}
-                      // onClick={() => filterApps({ app: app.app })}
-                    >
+                    <Menu.Item key={app._id} onClick={() => filterApps(app)}>
                       {app.app}
                     </Menu.Item>
                   )
@@ -149,38 +257,10 @@ const Apps = props => {
           </Menu>
         </Sider>
 
-        <Layout>
-          <h1>About Page</h1>
-          <Content style={{ padding: '0 24px 24px' }}>
-            {render}
-            {/* <code>
-              <pre>{JSON.stringify(props.apps, null, 2)}</pre>
-            </code> */}
-          </Content>
-        </Layout>
+        <Content style={{ padding: '0 24px 24px' }}>{render()}</Content>
       </Layout>
     </DefaultLayout>
   )
-}
-
-const query = `{
-  apps {
-    _id
-    app
-    url
-    roles
-  } 
-}`
-
-Apps.getInitialProps = async () => {
-  const apiUrl =
-    process.env.NODE_ENV === 'production'
-      ? process.env.prod.API_URL
-      : process.env.dev.API_URL
-  const response = await axios.post(`${apiUrl}/api/graphql`, {
-    query
-  })
-  return { ...response.data.data }
 }
 
 export default Apps

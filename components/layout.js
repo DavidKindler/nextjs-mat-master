@@ -48,9 +48,9 @@ function DefaultLayout ({ children, page }) {
                 <a>Apps</a>
               </Link>
             </Menu.Item>
-            <Menu.Item key='first'>
-              <Link href='/posts/first'>
-                <a>First</a>
+            <Menu.Item key='users'>
+              <Link href='/users'>
+                <a>Users</a>
               </Link>
             </Menu.Item>
             <SubMenu

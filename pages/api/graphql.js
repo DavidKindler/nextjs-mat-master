@@ -12,7 +12,7 @@ const typeDefs = gql`
     user(input: UserInput!): User
   }
   type Mutation {
-    newApp(input: NewAppInput!): [App]!
+    newApp(input: NewAppInput!): App!
     editAppUrl(input: EditAppUrlInput!): [App]!
     newUser(input: NewUserInput!): User!
     updateUserRights(input: NewUserRights!): User!
@@ -96,7 +96,7 @@ const typeDefs = gql`
 const resolvers = {
   Mutation: {
     newApp: async (_parent, { input }, _context) => {
-      return await _context.db.insert(appToAdd)
+      return await _context.db.insert({ ...input, roles: ['ADMIN', 'USER'] })
     },
     editAppUrl: async (_parent, { input }, _context) => {
       return await _context.db.update(
