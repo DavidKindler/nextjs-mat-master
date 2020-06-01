@@ -6,6 +6,7 @@ import { useQuery, useMutation } from '@apollo/react-hooks'
 // import gql from 'graphql-tag'
 import { gql } from 'apollo-boost'
 import AddApp from '../lib/AddApp'
+import DeleteApp from '../lib/DeleteApp'
 
 import DefaultLayout from '../components/layout'
 import { Layout, Menu, Table, Tag, Input, Button } from 'antd'
@@ -20,7 +21,7 @@ import { PlusCircleOutlined, FilterOutlined } from '@ant-design/icons'
 // import DeleteApp from './DeleteApp'
 // import CustomError from '../components/CustomError'
 
-const query = gql`
+const ALL_APPS_QUERY = gql`
   query allApps {
     apps {
       _id
@@ -41,6 +42,15 @@ const ADD_APP = gql`
     }
   }
 `
+
+const DELETE_APP = gql`
+  mutation delteApp($deleteApp: DeleteAppInput!) {
+    deleteApp(input: $deleteApp) {
+      deleted
+      _id
+    }
+  }
+`
 // const apiUrl =
 //   process.env.NODE_ENV === 'production'
 //     ? process.env.prod.API_URL
@@ -50,14 +60,41 @@ const Apps = props => {
   const [appnameInput, setAppnameInput] = useState('')
   const [filteredApps, setFilteredApps] = useState([])
   const [modal, setModal] = useState({ state: false, Component: null })
-  const { data, loading, error } = useQuery(query, {
+  const { data, loading, error } = useQuery(ALL_APPS_QUERY, {
     onCompleted: () => {
       setFilteredApps(data.apps)
     }
   })
-  const [addAppToDB, { results, loadingApp, errorAddApp }] = useMutation(
-    ADD_APP
-  )
+  const [addAppToDB, newApp] = useMutation(ADD_APP, {
+    update (cache, { data: { newApp } }) {
+      // console.log(cache.readQuery({ query: ALL_APPS_QUERY }))
+      const { apps } = cache.readQuery({ query: ALL_APPS_QUERY })
+      const newAppsArray = apps.concat([newApp])
+      console.log('newAppsArray', _.sortBy(newAppsArray, ['app']))
+      cache.writeQuery({
+        query: ALL_APPS_QUERY,
+        data: { apps: _.sortBy(newAppsArray, ['app']) }
+      })
+      setFilteredApps(_.sortBy(newAppsArray, ['app']))
+    }
+  })
+  const [deleteAppFromDB, deleteApp] = useMutation(DELETE_APP, {
+    update (cache, { data: { deleteApp } }) {
+      const { apps } = cache.readQuery({ query: ALL_APPS_QUERY })
+
+      // console.log('deleteApp', deleteApp)
+      const newAppsArray = _.remove(apps, function (n) {
+        return n._id !== deleteApp._id
+      })
+      // console.log('newAppsArray', _.sortBy(newAppsArray, ['app']))
+
+      cache.writeQuery({
+        query: ALL_APPS_QUERY,
+        data: { apps: _.sortBy(newAppsArray, ['app']) }
+      })
+      setFilteredApps(_.sortBy(newAppsArray, ['app']))
+    }
+  })
 
   // const [apps, setApps] = useState(props.data.apps)
   const ALL_APPS = loading ? [] : data.apps
@@ -71,13 +108,39 @@ const Apps = props => {
       title: 'app',
       dataIndex: 'app',
       key: 'app',
-      sorter: (a, b) => a.app.length - b.app.length
+      sorter: (a, b) => {
+        // return a.app.toUpperCase() - b.app.toUpperCase()
+        var nameA = a.app.toLowerCase() // ignore upper and lowercase
+        var nameB = b.app.toLowerCase() // ignore upper and lowercase
+        if (nameA < nameB) {
+          return -1
+        }
+        if (nameA > nameB) {
+          return 1
+        }
+
+        // names must be equal
+        return 0
+      }
     },
     {
       title: 'url',
       dataIndex: 'url',
       key: 'url',
-      sorter: (a, b) => a.url.length - b.url.length
+      sorter: (a, b) => {
+        // return a.url.toUpperCase() - b.url.toUpperCase()
+        var nameA = a.url.toLowerCase() // ignore upper and lowercase
+        var nameB = b.url.toLowerCase() // ignore upper and lowercase
+        if (nameA < nameB) {
+          return -1
+        }
+        if (nameA > nameB) {
+          return 1
+        }
+
+        // names must be equal
+        return 0
+      }
     },
     {
       title: 'roles',
@@ -95,7 +158,7 @@ const Apps = props => {
       }
     },
     {
-      title: 'Edit',
+      title: 'Update',
       key: 'edit',
       dataIndex: 'edit',
       render: function renderEdit (text, record) {
@@ -128,6 +191,7 @@ const Apps = props => {
             <Tag
               onClick={() => {
                 // deleteApp(record)
+                deleteAppHandler(record)
                 console.log(record)
               }}
               color={'red'}
@@ -162,29 +226,40 @@ const Apps = props => {
   const onCancel = () => {
     setModal({ state: false, Component: null })
   }
-  const onSubmit = (query, input) => {
-    console.log('query', query)
-    console.log('input', input)
+  const onSubmitAddApp = input => {
+    // console.log('input', input)
     setModal({ state: false, Component: null })
     addAppToDB(input)
+  }
+  const onSubmitDeleteApp = input => {
+    // console.log('input', input)
+    setModal({ state: false, Component: null })
+    deleteAppFromDB(input)
   }
 
   const addAppHandler = () => {
     setModal({
       state: true,
-      Component: <AddApp onCancel={onCancel} onSubmit={onSubmit} />
+      Component: <AddApp onCancel={onCancel} onSubmit={onSubmitAddApp} />
     })
-    console.log('add app with')
+  }
+
+  const deleteAppHandler = app => {
+    setModal({
+      state: true,
+      Component: (
+        <DeleteApp onCancel={onCancel} onSubmit={onSubmitDeleteApp} app={app} />
+      )
+    })
   }
 
   let render = () => {
-    if (loading) {
-      return <h1>Loading...</h1>
+    if (loading || newApp.loading) {
+      return <h2>Loading...</h2>
     }
-    if (error) {
-      return <h1>{error}</h1>
+    if (error || newApp.error) {
+      return <pre>{error}</pre>
     }
-    console.log('filteredApps', filteredApps)
     return (
       <Table
         columns={columns}

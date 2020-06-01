@@ -13,8 +13,10 @@ const typeDefs = gql`
   }
   type Mutation {
     newApp(input: NewAppInput!): App!
+    deleteApp(input: DeleteAppInput!): AppDeleted!
     editAppUrl(input: EditAppUrlInput!): [App]!
     newUser(input: NewUserInput!): User!
+    deleteUser(input: DeleteUserInput!): User!
     updateUserRights(input: NewUserRights!): User!
   }
 
@@ -23,6 +25,11 @@ const typeDefs = gql`
     app: String!
     url: String
     roles: [String]
+  }
+
+  type AppDeleted {
+    deleted: Boolean!
+    _id: String!
   }
 
   input NewAppInput {
@@ -40,6 +47,10 @@ const typeDefs = gql`
     url: String!
   }
 
+  input DeleteAppInput {
+    _id: ID!
+  }
+
   input EditRoleInput {
     app: String
     role: String
@@ -51,6 +62,10 @@ const typeDefs = gql`
 
   input UserInput {
     username: String!
+  }
+
+  input DeleteUserInput {
+    _id: String!
   }
 
   input NewUserInput {
@@ -96,7 +111,19 @@ const typeDefs = gql`
 const resolvers = {
   Mutation: {
     newApp: async (_parent, { input }, _context) => {
-      return await _context.db.insert({ ...input, roles: ['ADMIN', 'USER'] })
+      const newInput = Object.assign(
+        {},
+        {
+          ...input,
+          app: input.app.toUpperCase(),
+          roles: ['ADMIN', 'USER']
+        }
+      )
+      return await _context.db.insert(newInput)
+    },
+    deleteApp: async (_parent, { input }, _context) => {
+      let x = await _context.db.remove(input)
+      return { deleted: !!x, ...input }
     },
     editAppUrl: async (_parent, { input }, _context) => {
       return await _context.db.update(
@@ -107,6 +134,9 @@ const resolvers = {
     },
     newUser: async (_parent, { input }, _context) => {
       return await _context.db.insert(input)
+    },
+    deleteUser: async (_parent, { input }, _context) => {
+      return await _context.db.remove(input)
     },
     updateUserRights: async (_parent, { input }, _context) => {
       console.log('input is ', JSON.stringify(input, null, 2))

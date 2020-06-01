@@ -103,9 +103,9 @@ const SaltDB = dbConfig => {
 }
 
 async function doDatabaseStuff () {
-  let getItems = await crud.find()
-  console.log('getItems', getItems)
-  console.log('')
+  // let getItems = await crud.find()
+  // console.log('getItems', getItems)
+  // console.log('')
 
   // let getUsers = await db.find({ username: { $exists: true } })
   // console.log('getUsers', getUsers)
@@ -164,9 +164,13 @@ async function doDatabaseStuff () {
   var uniqueRoles = Array.from(new Set(r))
   console.log('roles', uniqueRoles)
   console.log('')
+
+  let z = await db.remove({ _id: 'iyQ6qeZAiRU1XJht' })
+  console.log(z)
+
   await db.persistence.compactDatafile()
 }
 
-SaltDB(initConfig)
+// SaltDB(initConfig)
 
 doDatabaseStuff()

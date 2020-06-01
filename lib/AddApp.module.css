@@ -1,11 +1,15 @@
-.correct {
-  /* border: 2px solid green; */
-  border: 2px solid RGBA(40, 206, 81, 0.33);
-}
-.incorrect {
-  border: 2px solid rgba(255, 0, 0, 0.3);
+input.nooutline {
+  outline: none;
+  border: none;
 }
 
-.edit-modal .ant-modal {
-  min-width: 800px;
+.correct {
+  /* border: 2px solid green; */
+  border: 3px solid RGBA(40, 206, 81, 0.33);
+  padding: 2px;
+}
+
+.incorrect {
+  border: 3px solid rgba(255, 0, 0, 0.3);
+  padding: 2px;
 }
