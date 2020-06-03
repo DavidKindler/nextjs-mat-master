@@ -32,6 +32,24 @@ const typeDefs = gql`
     _id: String!
   }
 
+  type User {
+    _id: ID!
+    email: String!
+    username: String
+    provider: String
+    rights: [Right]
+  }
+
+  type Right {
+    app: String
+    role: String
+  }
+
+  type Roles {
+    app: String!
+    roles: [String]
+  }
+
   input NewAppInput {
     app: String!
     url: String!
@@ -79,27 +97,9 @@ const typeDefs = gql`
     rights: NewRightInput!
   }
 
-  type Roles {
-    app: String!
-    roles: [String]
-  }
-
   input RoleInput {
     app: String!
     role: String!
-  }
-
-  type User {
-    _id: ID!
-    email: String!
-    username: String
-    provider: String
-    rights: [Right]
-  }
-
-  type Right {
-    app: String
-    role: String
   }
 
   input NewRightInput {
@@ -173,38 +173,6 @@ const resolvers = {
       return await _context.db.findOne({ username: input.username })
     }
   }
-  // App: {
-  //   roles: async (app, __, _context) => {
-  //     console.log('app=>roles')
-  //     return await _context.Models.Roles.findAll({
-  //       where: { appId: app.id }
-  //     })
-  //   }
-  // },
-  // Right: {
-  //   role: async (role, __, _context) => {
-  //     console.log('right => a role')
-  //     return await _context.Models.Roles.findOne({
-  //       where: { userId: role.userId }
-  //     })
-  //   }
-  // },
-  // Role: {
-  //   apps: async (role, __, _context) => {
-  //     console.log('role ==> apps')
-  //     return await _context.Models.Apps.findAll({
-  //       // include: [{ model: _context.Models.Rights }],
-  //       where: { id: role.appId }
-  //     })
-  //   }
-  //   // users: async (role, __, _context) => {
-  //   //   console.log('role ==> users', role)
-  //   //   return await _context.Models.Users.findAll({
-  //   //     include: [{ model: _context.Models.Rights }]
-  //   //     // where: { id: role.userId }
-  //   //   })
-  //   // }
-  // }
 }
 
 const cors = Cors({

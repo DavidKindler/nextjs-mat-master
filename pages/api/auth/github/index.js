@@ -50,24 +50,24 @@ export default (req, res) => {
 
   ////////////////////////   GITHUB STRATEGY  ///////////////////////////////////
 
-  console.log('req.query object', req.query)
+  console.log('0req.query object', req.query)
   // res.status(200).json({ text: 'github api' })
   if (!req.query.appurl || !req.query.redirecturl) {
     res.status(500).json({ error: 'Not all info needed for request' })
     res.end()
   }
 
-  console.log('github authenticate route / called now')
+  console.log('0github authenticate route / called now')
   let appurl = req.query.appurl
   let redirecturl = req.query.redirecturl || req.query.appurl
-  console.log('redirecturl1', redirecturl)
-  console.log('appurl1', appurl)
+  console.log('0redirecturl', redirecturl)
+  console.log('0appurl', appurl)
 
   passport.authenticate(
     'github',
     {
       scope: ['user:email'],
-      state: appurl
+      state: `${appurl}?appurl=${redirecturl}`
     },
     function (err, user, info) {
       //////////////////////////////////////////////////////

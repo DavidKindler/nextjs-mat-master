@@ -1,5 +1,6 @@
 const passport = require('passport')
 const normalizeUrl = require('normalize-url')
+var url = require('url')
 const generateToken = require('../../../../lib/generateToken')
 const GitHubStrategy = require('passport-github2').Strategy
 const sendMail = require('../../../../lib/sendEmail')
@@ -31,10 +32,12 @@ export default (req, res) => {
 
   const findGithubUserOrCreate = async (profile, done) => {
     console.log('findgithubuser 2')
-    console.log('gh profile passed ==>', profile.email, profile.username)
+    // console.log('gh profile passed ==>', profile)
     let appurl = req.query.state
-    console.log('appurl is set to==>', appurl)
-    const username = profile.username ? profile.username : profile.email
+    // console.log('appurl is set to==>', appurl)
+    const username = profile._json.login
+      ? profile._json.login
+      : profile._json.email
 
     let getUser = await db.findOne({ username: username })
     let app = await db.findOne({ url: appurl })
@@ -42,24 +45,48 @@ export default (req, res) => {
     console.log('getUser', getUser)
     console.log('app', app)
 
+    // check if getUser returned a value and define profile
+    // else create user without a right
+    // const profile = getUser
     profile = {
       username: 'foo',
       email: 'foo@goo.com',
       provider: 'GITHUB'
     }
+    // sendMail({
+    //   to: process.env.EMAIL_SEND_TO,
+    //   subject: `${profile.username} logged in to ${appToAssign} at ${appurl}`,
+    //   html: `<h2>${profile.username} Logged in to ${appToAssign} at ${appurl} </h2>`
+    // })
+
     done(null, profile, `new github user was registered`)
   }
 
   // router.get('/callback', (req, res, next) => {
-  console.log('github callback route /auth/github/callback called now')
-  let appurl = req.query.state
-  let redirecturl = appurl
-  process.env.NODE_ENV !== 'production' && console.log('appurl2', appurl)
+  console.log('1github callback route /auth/github/callback called now')
+  console.log('1request object', req.query)
+  // let z = `https://www.nxp.com/support/support/nxp-partner-directory:PARTNER-DIRECTORY#/{collection=partners&start=0&max=25&language=en&app=PartnerDirectory&parameters=applicationTax.deviceTax.ProdPartnerType.engagementModel.Location.serviceType.Vendor&query=applicationTax%3E%3Ec209&siblings=false}`
+  // console.log('test parse', url.parse(z))
+  let x = url.parse(req.query.state)
+  console.log('state parsed ', x)
+  let appurl = `${x.protocol}//${x.host}${x.pathname}`
+  console.log('1appurl is now', appurl)
+
+  const regex = /(?:^|[?&])appurl=([^&]*)/g
+  let m = regex.exec(req.query.state)
+
+  let redirecturl = `${m[1]}`
+  console.log('1redirecturl', redirecturl)
+
   passport.authenticate(
     'github',
-    { scope: ['user:email'], state: appurl },
+    {
+      scope: ['user:email'],
+      state: `${appurl}?appurl=${redirecturl}`
+    },
     function (err, profile) {
-      // console.log('callback function with profile', profile)
+      console.log('2passport.authenticate callback called')
+
       if (err) {
         // return next(err)
         // createError(500, err)
@@ -86,12 +113,12 @@ export default (req, res) => {
           'redirecting now to==>',
           `${appNormalUrl}${
             hasHash ? '' : '/'
-          }authredirect?redirecturl=${appurl}&token=${token}`
+          }login?redirecturl=${redirecturl}&token=${token}`
         )
         res.writeHead(302, {
           Location: `${appNormalUrl}${
             hasHash ? '' : '/'
-          }authredirect?redirecturl=${appurl}&token=${token}`
+          }login?redirecturl=${redirecturl}&token=${token}`
         })
         res.end()
 

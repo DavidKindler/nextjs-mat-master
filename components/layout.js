@@ -1,6 +1,6 @@
-import styles from './layout.module.css'
 import Head from 'next/head'
 import Link from 'next/link'
+import Router from 'next/router'
 import AuthHelper from '../auth/AuthHelper'
 import { Layout, Menu } from 'antd'
 import {
@@ -13,13 +13,24 @@ import {
 } from '@ant-design/icons'
 const { SubMenu } = Menu
 const { Header, Content, Sider } = Layout
-const name = 'Your Name'
-export const siteTitle = 'Next.js Sample Website'
+// const name = 'Your Name'
+export const siteTitle = 'MAT Master Site'
 
 function DefaultLayout ({ children, page }) {
   const Auth = new AuthHelper()
   let loggedIn = Auth.loggedIn()
   let adminRole = Auth.adminRole()
+
+  const logout = () => {
+    // let Auth = new AuthHelper();
+    console.log('Logout user')
+    // Cookies.remove('__session')
+    Auth.logout()
+    console.log('removed token')
+    // return <Redirect to={"/"} />
+    // props.history.push('/login')
+    Router.push('/login')
+  }
 
   return (
     <>
@@ -72,9 +83,9 @@ function DefaultLayout ({ children, page }) {
 
               {loggedIn && (
                 <Menu.Item key='logout'>
-                  <Link href='/logout'>
-                    <a>Logout</a>
-                  </Link>
+                  {/* <Link href='/logout'> */}
+                  <a onClick={logout}>Logout</a>
+                  {/* </Link> */}
                 </Menu.Item>
               )}
 
