@@ -86,8 +86,8 @@ class Login extends Component {
   render () {
     let { appurl, redirecturl } = this.state
 
-    let uatURL = `${process.env.dev.REACT_APP_AUTH_URL}/api/auth/uat?appurl=${appurl}&redirecturl=${redirecturl}`
-    let ghURL = `${process.env.dev.REACT_APP_AUTH_URL}/api/auth/github?appurl=${appurl}&redirecturl=${redirecturl}`
+    let uatURL = `${process.env.REACT_APP_AUTH_URL}/api/auth/uat?appurl=${appurl}&redirecturl=${redirecturl}`
+    let ghURL = `${process.env.REACT_APP_AUTH_URL}/api/auth/github?appurl=${appurl}&redirecturl=${redirecturl}`
 
     const {
       // email,

@@ -51,10 +51,6 @@ const DELETE_APP = gql`
     }
   }
 `
-// const apiUrl =
-//   process.env.NODE_ENV === 'production'
-//     ? process.env.prod.API_URL
-//     : process.env.dev.API_URL
 
 const Apps = props => {
   const [appnameInput, setAppnameInput] = useState('')
