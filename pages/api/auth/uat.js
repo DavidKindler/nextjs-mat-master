@@ -19,16 +19,21 @@ passport.deserializeUser(function (obj, done) {
 
 const authenticate = (req, res) =>
   new Promise((resolve, reject) => {
-    passport.authenticate('cas', async (username, profile, info) => {
+    passport.authenticate('cas', async profile => {
       console.log('passport.authenticate called')
-      console.log('username object', username)
+      console.log('req object', req.query)
       console.log('profile object', profile)
-      console.log('info object', info)
-      let user = await db.findOne({ username: username })
+      let user = await db.findOne({ username: profile.id })
       console.log('User', user)
       if (!user) {
-        // create user here?
-        reject('no user')
+        let userToAdd = {
+          username: profile.id,
+          email: profile.emails[0] || '',
+          provider: 'UAT'
+        }
+        let user = await db.insert(userToAdd)
+        console.log('new user', user)
+        resolve(user)
       } else {
         resolve(user)
       }
@@ -39,9 +44,11 @@ passport.use(
   new CasStrategy(
     { casURL: process.env.UAT_URL },
     (username, profile, done) => {
-      console.log('uat strategy called', username, profile)
+      console.log('uat strategy called')
+      console.log('username ===> ', username)
+      console.log('profile==>', profile)
       // findUatUserOrCreate(username, profile, done)
-      done(username, profile, `UAT user logged in`)
+      done(profile)
     }
   )
 )
@@ -79,7 +86,16 @@ export default nextConnect()
       res.end()
     } catch (error) {
       console.error(error)
-      res.status(401).send(error.message)
+      let { appurl, redirecturl } = req.query
+      let appNormalUrl = normalizeUrl(appurl)
+      let hasHash = appNormalUrl.indexOf('#/') !== -1
+      res.writeHead(302, {
+        Location: `${appNormalUrl}${hasHash ? '' : '/'}login?error=${
+          error.message
+        }`
+      })
+      res.end()
+      // res.status(401).send(error.message)
     }
   })
 

@@ -27,6 +27,11 @@ class Login extends Component {
 
   componentDidMount () {
     const searchParams = new URLSearchParams(window.location.search)
+    const error = searchParams.get('error')
+    if (error) {
+      this.setState({ showError: true, errorResponse: error })
+    }
+
     let prevUrl =
       this.props.history && this.props.history.length
         ? this.props.history[this.props.history.length - 1]
@@ -66,55 +71,57 @@ class Login extends Component {
       )
     let uatURL = `${process.env.REACT_APP_AUTH_URL}/api/auth/uat?appurl=${appurl}&redirecturl=${redirecturl}`
     let ghURL = `${process.env.REACT_APP_AUTH_URL}/api/auth/github?appurl=${appurl}&redirecturl=${redirecturl}`
+
+    let render = appurl ? (
+      <Card
+        title='Login'
+        bordered={false}
+        style={{ maxWidth: 400, margin: '0 auto' }}
+      >
+        <p>Login via UAT SSO. You will be redirected back here.</p>
+        <a href={uatURL}>
+          <Button
+            block
+            style={{
+              background: 'white',
+              color: 'black',
+              margin: '10px 0'
+            }}
+          >
+            <img
+              src='/images/nxp-logo.svg'
+              alt='UAT LOGIN'
+              style={{ height: '12px', marginRight: '2px' }}
+            />
+            UAT LOGIN
+          </Button>
+        </a>
+        {process.env.NODE_ENV !== 'production' ? (
+          <a href={ghURL}>
+            <Button
+              block
+              style={{
+                background: 'black',
+                color: 'white',
+                margin: '10px 0'
+              }}
+            >
+              <GithubOutlined />
+              Github
+            </Button>
+          </a>
+        ) : null}
+
+        {errorResponse && <Alert message={errorResponse} type='error' />}
+        {/* {errorMessage && <Alert message={errorMessage} type='error' />} */}
+      </Card>
+    ) : null
     return (
       <DefaultLayout page={'login'}>
         <Head>
           <title>Login page</title>
         </Head>
-        <Layout>
-          <Card
-            title='Login'
-            bordered={false}
-            style={{ maxWidth: 400, margin: '0 auto' }}
-          >
-            <p>Login via UAT SSO. You will be redirected back here.</p>
-            <a href={uatURL}>
-              <Button
-                block
-                style={{
-                  background: 'white',
-                  color: 'black',
-                  margin: '10px 0'
-                }}
-              >
-                <img
-                  src='/images/nxp-logo.svg'
-                  alt='UAT LOGIN'
-                  style={{ height: '12px', marginRight: '2px' }}
-                />
-                UAT LOGIN
-              </Button>
-            </a>
-            {process.env.NODE_ENV !== 'production' ? (
-              <a href={ghURL}>
-                <Button
-                  block
-                  style={{
-                    background: 'black',
-                    color: 'white',
-                    margin: '10px 0'
-                  }}
-                >
-                  <GithubOutlined />
-                  Github
-                </Button>
-              </a>
-            ) : null}
-
-            {errorResponse && <Alert message={errorResponse} type='error' />}
-            {errorMessage && <Alert message={errorMessage} type='error' />}
-          </Card>
-        </Layout>
+        <Layout>{render}</Layout>
       </DefaultLayout>
     )
   }
