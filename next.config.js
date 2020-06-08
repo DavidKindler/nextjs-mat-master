@@ -1,4 +1,5 @@
 const { PHASE_DEVELOPMENT_SERVER } = require('next/constants')
+global.fetch = require('node-fetch')
 
 module.exports = (phase, { defaultConfig }) => {
   let port = 3000

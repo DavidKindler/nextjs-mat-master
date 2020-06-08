@@ -5,7 +5,7 @@
     "salt": "cross-env NODE_ENV=test node ./lib/db",
     "dev": "next",
     "build": "next build",
-    "start": "next start"
+    "start": "next start -p 4000"
   },
   "dependencies": {
     "@ant-design/icons": "^4.1.0",
@@ -29,6 +29,7 @@
     "next": "^9.4.0",
     "next-connect": "^0.7.0",
     "next-session": "^3.2.3",
+    "node-fetch": "^2.6.0",
     "normalize-url": "^5.0.0",
     "passport": "^0.4.1",
     "passport-cas2": "^0.0.11",
