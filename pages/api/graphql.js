@@ -8,6 +8,7 @@ const typeDefs = gql`
     app(input: AppInput!): App
     rolesUnique: [String]
     rolesForApp(input: AppInput): Roles
+    providers: [String]
     users: [User]
     user(input: UserInput!): User
   }
@@ -16,7 +17,7 @@ const typeDefs = gql`
     deleteApp(input: DeleteAppInput!): AppDeleted!
     editAppUrl(input: EditAppUrlInput!): [App]!
     newUser(input: NewUserInput!): User!
-    deleteUser(input: DeleteUserInput!): User!
+    deleteUser(input: DeleteUserInput!): UserDeleted!
     updateUserRights(input: NewUserRights!): User!
   }
 
@@ -32,10 +33,15 @@ const typeDefs = gql`
     _id: String!
   }
 
+  type UserDeleted {
+    deleted: Boolean!
+    _id: String!
+  }
+
   type User {
     _id: ID!
-    email: String!
-    username: String
+    username: String!
+    email: String
     provider: String
     rights: [Right]
   }
@@ -88,8 +94,8 @@ const typeDefs = gql`
 
   input NewUserInput {
     email: String!
-    username: String
-    provider: String
+    username: String!
+    provider: String!
   }
 
   input NewUserRights {
@@ -136,7 +142,8 @@ const resolvers = {
       return await _context.db.insert(input)
     },
     deleteUser: async (_parent, { input }, _context) => {
-      return await _context.db.remove(input)
+      let x = await _context.db.remove(input)
+      return { deleted: !!x, ...input }
     },
     updateUserRights: async (_parent, { input }, _context) => {
       console.log('input is ', JSON.stringify(input, null, 2))
@@ -159,6 +166,12 @@ const resolvers = {
       let r = x.flatMap(y => y.roles)
       var uniqueRoles = Array.from(new Set(r))
       return uniqueRoles
+    },
+    providers: async (_parent, { input }, _context) => {
+      let x = await db.find({ provider: { $exists: true } })
+      let r = x.flatMap(y => y.provider)
+      var uniqueProviders = Array.from(new Set(r)).filter(x => x !== 'GITHUB')
+      return uniqueProviders
     },
     rolesForApp: async (_parent, { input }, _context) => {
       let x = await db.find({ app: input.app })

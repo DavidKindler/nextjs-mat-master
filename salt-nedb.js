@@ -165,12 +165,9 @@ async function doDatabaseStuff () {
   console.log('roles', uniqueRoles)
   console.log('')
 
-  let z = await db.remove({ _id: 'iyQ6qeZAiRU1XJht' })
-  console.log(z)
-
   await db.persistence.compactDatafile()
 }
 
-// SaltDB(initConfig)
+SaltDB(initConfig)
 
 doDatabaseStuff()

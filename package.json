@@ -2,7 +2,7 @@
   "name": "with-ant-design",
   "version": "1.0.0",
   "scripts": {
-    "salt": "cross-env NODE_ENV=test node ./lib/db",
+    "salt": "cross-env NODE_ENV=test node ./salt-nedb",
     "dev": "next",
     "build": "next build",
     "start": "next start -p 4000"

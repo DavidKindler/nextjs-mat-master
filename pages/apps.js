@@ -42,7 +42,7 @@ const ADD_APP = gql`
 `
 
 const DELETE_APP = gql`
-  mutation delteApp($deleteApp: DeleteAppInput!) {
+  mutation deleteApp($deleteApp: DeleteAppInput!) {
     deleteApp(input: $deleteApp) {
       deleted
       _id

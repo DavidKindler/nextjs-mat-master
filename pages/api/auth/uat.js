@@ -28,15 +28,13 @@ const authenticate = (req, res) =>
       if (!user) {
         let userToAdd = {
           username: profile.id,
-          email: profile.emails[0] || '',
+          email: profile.id,
           provider: 'UAT'
         }
-        let user = await db.insert(userToAdd)
-        console.log('new user', user)
-        resolve(user)
-      } else {
-        resolve(user)
+        console.log('user to add', userToAdd)
+        user = await db.insert(userToAdd)
       }
+      resolve(user)
     })(req, res)
   })
 
