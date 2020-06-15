@@ -6,6 +6,7 @@ import _ from 'lodash'
 import Router from 'next/router'
 import AddUser from '../lib/AddUser'
 import DeleteUser from '../lib/DeleteUser'
+import EditUser from '../lib/EditUser'
 
 import DefaultLayout from '../components/layout'
 import { Layout, Menu, Table, Tag, Input, Button } from 'antd'
@@ -156,7 +157,7 @@ const Users = props => {
                   color = 'volcano'
                 }
                 return (
-                  <Tag color={color} key={right.id}>
+                  <Tag color={color} key={Math.random()}>
                     {`${right.app ? 'App: ' + right.app.toUpperCase() : ''} | 
                     ${right.role ? 'Role: ' + right.role.toUpperCase() : ''}`}
                   </Tag>
@@ -175,7 +176,7 @@ const Users = props => {
           <>
             <Tag
               onClick={() => {
-                // editApp(record)
+                editUserHandler(record)
                 console.log(record)
               }}
               color={'cyan'}

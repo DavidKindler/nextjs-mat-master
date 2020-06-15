@@ -5,6 +5,7 @@ import { useQuery, useMutation } from '@apollo/react-hooks'
 import { gql } from 'apollo-boost'
 import AddApp from '../lib/AddApp'
 import DeleteApp from '../lib/DeleteApp'
+import EditApp from '../lib/EditApp'
 
 import DefaultLayout from '../components/layout'
 import { Layout, Menu, Table, Tag, Input, Button } from 'antd'
@@ -33,6 +34,17 @@ const ALL_APPS_QUERY = gql`
 const ADD_APP = gql`
   mutation addApp($newApp: NewAppInput!) {
     newApp(input: $newApp) {
+      _id
+      app
+      url
+      roles
+    }
+  }
+`
+
+const UPDATE_APP = gql`
+  mutation updateApp($appUpdated: UpdateAppInput!) {
+    newApp(input: $appUpdated) {
       _id
       app
       url
@@ -90,7 +102,29 @@ const Apps = props => {
     }
   })
 
-  // const [apps, setApps] = useState(props.data.apps)
+  const [updateAppFromDB, updateApp] = useMutation(UPDATE_APP, {
+    update (cache, { data: { updateApp } }) {
+      const { apps } = cache.readQuery({ query: ALL_APPS_QUERY })
+
+      // console.log('deleteApp', deleteApp)
+      // console.log('newAppsArray', _.sortBy(newAppsArray, ['app']))
+
+      //update app with updateApp._id with new
+      const newAppsArray = apps.map(app => {
+        if (app._id === updateApp._id) {
+          return updateApp
+        }
+        return app
+      })
+
+      cache.writeQuery({
+        query: ALL_APPS_QUERY,
+        data: { apps: _.sortBy(newAppsArray, ['app']) }
+      })
+      setFilteredApps(_.sortBy(newAppsArray, ['app']))
+    }
+  })
+
   const ALL_APPS = loading ? [] : data.apps
 
   // console.log('data', data)
@@ -176,6 +210,7 @@ const Apps = props => {
             <Tag
               onClick={() => {
                 // editApp(record)
+                editAppHandler(record)
                 console.log(record)
               }}
               color={'cyan'}
@@ -231,6 +266,13 @@ const Apps = props => {
     deleteAppFromDB(input)
   }
 
+  const onSubmitEditApp = input => {
+    // console.log('input', input)
+    setModal({ state: false, Component: null })
+    // deleteAppFromDB(input)
+    console.log('onSubmitEditApp inpu', input)
+  }
+
   const addAppHandler = () => {
     setModal({
       state: true,
@@ -243,6 +285,15 @@ const Apps = props => {
       state: true,
       Component: (
         <DeleteApp onCancel={onCancel} onSubmit={onSubmitDeleteApp} app={app} />
+      )
+    })
+  }
+
+  const editAppHandler = app => {
+    setModal({
+      state: true,
+      Component: (
+        <EditApp onCancel={onCancel} onSubmit={onSubmitEditApp} app={app} />
       )
     })
   }

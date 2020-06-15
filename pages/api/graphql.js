@@ -7,7 +7,7 @@ const typeDefs = gql`
     apps: [App]
     app(input: AppInput!): App
     rolesUnique: [String]
-    rolesForApp(input: AppInput): Roles
+    rolesForApp(input: AppInput!): Roles
     providers: [String]
     users: [User]
     user(input: UserInput!): User
@@ -15,6 +15,7 @@ const typeDefs = gql`
   type Mutation {
     newApp(input: NewAppInput!): App!
     deleteApp(input: DeleteAppInput!): AppDeleted!
+    updateApp(input: UpdateAppInput!): App!
     editAppUrl(input: EditAppUrlInput!): [App]!
     newUser(input: NewUserInput!): User!
     deleteUser(input: DeleteUserInput!): UserDeleted!
@@ -81,7 +82,12 @@ const typeDefs = gql`
   }
 
   input AppInput {
-    app: String
+    app: String!
+  }
+
+  input UpdateAppInput {
+    _id: ID!
+    roles: [String]
   }
 
   input UserInput {
@@ -130,6 +136,14 @@ const resolvers = {
     deleteApp: async (_parent, { input }, _context) => {
       let x = await _context.db.remove(input)
       return { deleted: !!x, ...input }
+    },
+    updateApp: async (_parent, { input }, _context) => {
+      let x = await _context.db.update(
+        { _id: input._id },
+        { $set: { roles: input.roles } },
+        { returnUpdatedDocs: true }
+      )
+      return x
     },
     editAppUrl: async (_parent, { input }, _context) => {
       return await _context.db.update(
