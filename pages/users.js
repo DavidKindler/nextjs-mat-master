@@ -1,7 +1,14 @@
 import { useState } from 'react'
 import Head from 'next/head'
 import { useQuery, useMutation } from '@apollo/react-hooks'
-import { gql } from 'apollo-boost'
+import {
+  ALL_USERS_QUERY,
+  ADD_USER,
+  DELETE_USER,
+  REMOVE_USER_RIGHTS,
+  UPDATE_USER_RIGHT,
+  ADD_USER_RIGHTS
+} from '../lib/graphql-gql'
 import _ from 'lodash'
 import Router from 'next/router'
 import AddUser from '../lib/AddUser'
@@ -19,38 +26,6 @@ import { PlusCircleOutlined, FilterOutlined } from '@ant-design/icons'
 // import AddApp from './AddApp'
 // import DeleteApp from './DeleteApp'
 // import CustomError from '../components/CustomError'
-const ALL_USERS_QUERY = gql`
-  query Users {
-    users {
-      _id
-      username
-      email
-      provider
-      rights {
-        app
-        role
-      }
-    }
-  }
-`
-const ADD_USER = gql`
-  mutation addUser($newUser: NewUserInput!) {
-    newUser(input: $newUser) {
-      email
-      username
-      provider
-    }
-  }
-`
-
-const DELETE_USER = gql`
-  mutation DeleteUser($deleteUser: DeleteUserInput!) {
-    deleteUser(input: $deleteUser) {
-      deleted
-      _id
-    }
-  }
-`
 
 // client.query({ query }).then(result => console.log('users', result.data.users))
 const Users = props => {
@@ -69,7 +44,61 @@ const Users = props => {
       const { users } = cache.readQuery({ query: ALL_USERS_QUERY })
       const newUsersArray = users.concat([newUser])
       const sortedUsers = _.sortBy(newUsersArray, ['username'])
-      console.log('newUsersArray', sortedUsers)
+      cache.writeQuery({
+        query: ALL_USERS_QUERY,
+        data: { users: sortedUsers }
+      })
+      setFilteredUsers(sortedUsers)
+    }
+  })
+  const [addRightToUser, newRights] = useMutation(ADD_USER_RIGHTS, {
+    update (cache, { data: { newRights } }) {
+      const { users } = cache.readQuery({ query: ALL_USERS_QUERY })
+
+      // const newUsersArray = _.remove(users, function (n) {
+      //   return n._id !== deleteUser._id
+      // })
+      // console.log('users cache1', users)
+      // console.log('newRights', newRights)
+      const newUsersArray = users
+      const sortedUsers = _.sortBy(newUsersArray, ['username'])
+      cache.writeQuery({
+        query: ALL_USERS_QUERY,
+        data: { users: sortedUsers }
+      })
+      setFilteredUsers(sortedUsers)
+    }
+  })
+  const [removeRightFromUser, removeRights] = useMutation(REMOVE_USER_RIGHTS, {
+    update (cache, { data: { removeRights } }) {
+      const { users } = cache.readQuery({ query: ALL_USERS_QUERY })
+
+      // const newUsersArray = _.remove(users, function (n) {
+      //   return n._id !== deleteUser._id
+      // })
+      // console.log('users cache2', users)
+      // console.log('removeRights', removeRights)
+      const newUsersArray = users
+      const sortedUsers = _.sortBy(newUsersArray, ['username'])
+      cache.writeQuery({
+        query: ALL_USERS_QUERY,
+        data: { users: sortedUsers }
+      })
+      setFilteredUsers(sortedUsers)
+    }
+  })
+
+  const [updateRightToUser, udpateRights] = useMutation(UPDATE_USER_RIGHT, {
+    update (cache, { data: { updateRights } }) {
+      const { users } = cache.readQuery({ query: ALL_USERS_QUERY })
+
+      // const newUsersArray = _.remove(users, function (n) {
+      //   return n._id !== deleteUser._id
+      // })
+      // console.log('users cache2', users)
+      // console.log('removeRights', removeRights)
+      const newUsersArray = users
+      const sortedUsers = _.sortBy(newUsersArray, ['username'])
       cache.writeQuery({
         query: ALL_USERS_QUERY,
         data: { users: sortedUsers }
@@ -80,6 +109,7 @@ const Users = props => {
 
   const [deleteUserFromDB, deleteUser] = useMutation(DELETE_USER, {
     update (cache, { data: { deleteUser } }) {
+      // console.log('deleteUser', deleteUser)
       const { users } = cache.readQuery({ query: ALL_USERS_QUERY })
       const newUsersArray = _.remove(users, function (n) {
         return n._id !== deleteUser._id
@@ -95,6 +125,7 @@ const Users = props => {
 
   const ALL_USERS =
     loading || deleteUser.loading || newUser.loading ? [] : data.users
+
   const columns = [
     {
       title: 'username',
@@ -177,7 +208,6 @@ const Users = props => {
             <Tag
               onClick={() => {
                 editUserHandler(record)
-                console.log(record)
               }}
               color={'cyan'}
             >
@@ -185,9 +215,7 @@ const Users = props => {
             </Tag>
             <Tag
               onClick={() => {
-                // deleteApp(record)
                 deleteUserHandler(record)
-                console.log(record)
               }}
               color={'red'}
             >
@@ -225,17 +253,48 @@ const Users = props => {
     // console.log('input', input)
     setModal({ state: false, Component: null })
     addUserToDB(input)
+    // .then(
+    //   res => console.log('add res', res),
+    //   err => console.log('add err', err)
+    // )
   }
   const onSubmitDeleteUser = input => {
-    console.log('input', input)
-    setModal({ state: false, Component: null })
-    deleteUserFromDB(input)
+    // console.log('input', input)
+    if (window.confirm('Are you sure?')) {
+      setModal({ state: false, Component: null })
+      deleteUserFromDB(input)
+    }
   }
 
-  const onSubmitEditUser = input => {
-    console.log('input', input)
-    setModal({ state: false, Component: null })
-    deleteUserFromDB(input)
+  const onAddRightToUser = input => {
+    // console.log('onAddRightToUser input', input)
+    const id = input.user._id
+    const right = input.right
+    // console.log('onAddRightToUser input', id, right)
+
+    addRightToUser({
+      variables: { newRights: { _id: id, rights: right } }
+    })
+  }
+
+  const onDeleteRightToUser = input => {
+    const id = input.user._id
+    const x = _.find(input.user.rights, { app: input.app })
+    const right = { app: x.app, role: x.role }
+    // console.log('onDeleteRightToUser input', id, right)
+
+    removeRightFromUser({
+      variables: { removeRights: { _id: id, rights: right } }
+    })
+  }
+
+  const onChangeRoleToUser = input => {
+    console.log('onChangeRoleToUser input', input)
+    updateRightToUser({
+      variables: { newRole: { _id: input._id, right: input.right } }
+    })
+
+    // setModal({ state: false, Component: null })
   }
 
   const addUserHandler = () => {
@@ -262,7 +321,13 @@ const Users = props => {
     setModal({
       state: true,
       Component: (
-        <EditUser onCancel={onCancel} onSubmit={onSubmitEditUser} user={user} />
+        <EditUser
+          onCancel={onCancel}
+          onAddRightToUser={onAddRightToUser}
+          onDeleteRightToUser={onDeleteRightToUser}
+          onChangeRoleToUser={onChangeRoleToUser}
+          user={user}
+        />
       )
     })
   }
@@ -288,7 +353,7 @@ const Users = props => {
       <Table
         columns={columns}
         dataSource={filteredUsers}
-        rowKey={record => record._id}
+        rowKey={record => record.username}
       />
     )
   }

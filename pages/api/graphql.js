@@ -19,7 +19,9 @@ const typeDefs = gql`
     editAppUrl(input: EditAppUrlInput!): [App]!
     newUser(input: NewUserInput!): User!
     deleteUser(input: DeleteUserInput!): UserDeleted!
-    updateUserRights(input: NewUserRights!): User!
+    addUserRights(input: NewUserRights!): User!
+    removeUserRights(input: RemoveUserRights!): User!
+    updateUserRole(input: UpdateUserRoleInput!): User!
   }
 
   type App {
@@ -91,7 +93,8 @@ const typeDefs = gql`
   }
 
   input UserInput {
-    username: String!
+    _id: String
+    username: String
   }
 
   input DeleteUserInput {
@@ -106,7 +109,17 @@ const typeDefs = gql`
 
   input NewUserRights {
     _id: ID!
-    rights: NewRightInput!
+    rights: RightInput!
+  }
+
+  input RemoveUserRights {
+    _id: ID!
+    rights: RightInput!
+  }
+
+  input UpdateUserRoleInput {
+    _id: ID!
+    right: NewRoleInput!
   }
 
   input RoleInput {
@@ -114,7 +127,7 @@ const typeDefs = gql`
     role: String!
   }
 
-  input NewRightInput {
+  input RightInput {
     app: String!
     role: String!
   }
@@ -153,18 +166,44 @@ const resolvers = {
       )
     },
     newUser: async (_parent, { input }, _context) => {
-      return await _context.db.insert(input)
+      const x = await _context.db.insert(input)
+      console.log('new user', JSON.stringify(x, null, 2))
+      return x
     },
     deleteUser: async (_parent, { input }, _context) => {
       let x = await _context.db.remove(input)
       return { deleted: !!x, ...input }
     },
-    updateUserRights: async (_parent, { input }, _context) => {
-      console.log('input is ', JSON.stringify(input, null, 2))
-      return await _context.db.update(
+    addUserRights: async (_parent, { input }, _context) => {
+      const x = await _context.db.update(
         { _id: input._id },
-        { $set: { rights: input.rights } }
+        { $addToSet: { rights: input.rights } },
+        { returnUpdatedDocs: true }
       )
+      console.log('addUserRights', JSON.stringify(x, null, 2))
+      return x
+    },
+    removeUserRights: async (_parent, { input }, _context) => {
+      const x = await _context.db.update(
+        { _id: input._id },
+        { $pull: { rights: input.rights } },
+        { returnUpdatedDocs: true }
+      )
+      console.log('removeUserRights ', JSON.stringify(x, null, 2))
+      return x
+    },
+    updateUserRole: async (_parent, { input }, _context) => {
+      const y = await _context.db.findOne({ _id: input._id })
+      const newRights = y.rights.map(right =>
+        right.app === input.right.app ? input.right : right
+      )
+      const x = await _context.db.update(
+        { _id: input._id },
+        { $set: { rights: newRights } },
+        { returnUpdatedDocs: true }
+      )
+      console.log('updateUserRole ', JSON.stringify(x, null, 2))
+      return x
     }
   },
   Query: {
@@ -197,7 +236,9 @@ const resolvers = {
       return await db.find({ username: { $exists: true } })
     },
     user: async (_parent, { input }, _context) => {
-      return await _context.db.findOne({ username: input.username })
+      return await _context.db.findOne({
+        $or: [{ username: input.username }, { _id: input._id }]
+      })
     }
   }
 }

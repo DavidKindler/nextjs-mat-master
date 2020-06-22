@@ -2,7 +2,13 @@ import { useState } from 'react'
 import _ from 'lodash'
 import Head from 'next/head'
 import { useQuery, useMutation } from '@apollo/react-hooks'
-import { gql } from 'apollo-boost'
+import {
+  ALL_APPS_QUERY,
+  ADD_APP,
+  UPDATE_APP,
+  DELETE_APP
+} from '../lib/graphql-gql'
+
 import AddApp from '../lib/AddApp'
 import DeleteApp from '../lib/DeleteApp'
 import EditApp from '../lib/EditApp'
@@ -19,48 +25,6 @@ import { PlusCircleOutlined, FilterOutlined } from '@ant-design/icons'
 // import AddApp from './AddApp'
 // import DeleteApp from './DeleteApp'
 // import CustomError from '../components/CustomError'
-
-const ALL_APPS_QUERY = gql`
-  query allApps {
-    apps {
-      _id
-      app
-      url
-      roles
-    }
-  }
-`
-
-const ADD_APP = gql`
-  mutation addApp($newApp: NewAppInput!) {
-    newApp(input: $newApp) {
-      _id
-      app
-      url
-      roles
-    }
-  }
-`
-
-const UPDATE_APP = gql`
-  mutation updateApp($appUpdated: UpdateAppInput!) {
-    newApp(input: $appUpdated) {
-      _id
-      app
-      url
-      roles
-    }
-  }
-`
-
-const DELETE_APP = gql`
-  mutation deleteApp($deleteApp: DeleteAppInput!) {
-    deleteApp(input: $deleteApp) {
-      deleted
-      _id
-    }
-  }
-`
 
 const Apps = props => {
   const [appnameInput, setAppnameInput] = useState('')
