@@ -5,7 +5,7 @@ const { db } = require('../../lib/nedb')
 const typeDefs = gql`
   type Query {
     apps: [App]
-    app(input: AppInput!): App
+    app(input: AppInput!): App!
     rolesUnique: [String]
     rolesForApp(input: AppInput!): Roles
     providers: [String]
@@ -15,8 +15,8 @@ const typeDefs = gql`
   type Mutation {
     newApp(input: NewAppInput!): App!
     deleteApp(input: DeleteAppInput!): AppDeleted!
-    updateApp(input: UpdateAppInput!): App!
-    editAppUrl(input: EditAppUrlInput!): [App]!
+    updateAppRoles(input: UpdateAppRolesInput!): App!
+    updateAppUrl(input: UpdateAppUrlInput!): App!
     newUser(input: NewUserInput!): User!
     deleteUser(input: DeleteUserInput!): UserDeleted!
     addUserRights(input: NewUserRights!): User!
@@ -69,9 +69,14 @@ const typeDefs = gql`
     role: String!
   }
 
-  input EditAppUrlInput {
+  input UpdateAppUrlInput {
     _id: ID!
     url: String!
+  }
+
+  input UpdateAppRolesInput {
+    _id: ID!
+    roles: [String]!
   }
 
   input DeleteAppInput {
@@ -84,12 +89,8 @@ const typeDefs = gql`
   }
 
   input AppInput {
-    app: String!
-  }
-
-  input UpdateAppInput {
-    _id: ID!
-    roles: [String]
+    app: String
+    _id: ID
   }
 
   input UserInput {
@@ -150,7 +151,7 @@ const resolvers = {
       let x = await _context.db.remove(input)
       return { deleted: !!x, ...input }
     },
-    updateApp: async (_parent, { input }, _context) => {
+    updateAppRoles: async (_parent, { input }, _context) => {
       let x = await _context.db.update(
         { _id: input._id },
         { $set: { roles: input.roles } },
@@ -158,7 +159,7 @@ const resolvers = {
       )
       return x
     },
-    editAppUrl: async (_parent, { input }, _context) => {
+    updateAppUrl: async (_parent, { input }, _context) => {
       return await _context.db.update(
         { _id: input._id },
         { $set: { url: input.url } },
@@ -210,9 +211,10 @@ const resolvers = {
     apps: async (_parent, { input }, _context) => {
       return await _context.db.find({ app: { $exists: true } }).sort({ app: 1 })
     },
-
     app: async (_parent, { input }, _context) => {
-      return await _context.db.findOne({ app: input.app })
+      return await _context.db.findOne({
+        $or: [{ app: input.app }, { _id: input._id }]
+      })
     },
     rolesUnique: async (_parent, { input }, _context) => {
       let x = await db.find({ roles: { $exists: true } })

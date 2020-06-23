@@ -5,7 +5,8 @@ import { useQuery, useMutation } from '@apollo/react-hooks'
 import {
   ALL_APPS_QUERY,
   ADD_APP,
-  UPDATE_APP,
+  UPDATE_APP_URL,
+  UPDATE_APP_ROLES,
   DELETE_APP
 } from '../lib/graphql-gql'
 
@@ -66,26 +67,31 @@ const Apps = props => {
     }
   })
 
-  const [updateAppFromDB, updateApp] = useMutation(UPDATE_APP, {
+  const [updateAppRolesFromDB] = useMutation(UPDATE_APP_ROLES, {
     update (cache, { data: { updateApp } }) {
       const { apps } = cache.readQuery({ query: ALL_APPS_QUERY })
-
-      // console.log('deleteApp', deleteApp)
-      // console.log('newAppsArray', _.sortBy(newAppsArray, ['app']))
-
-      //update app with updateApp._id with new
-      const newAppsArray = apps.map(app => {
-        if (app._id === updateApp._id) {
-          return updateApp
-        }
-        return app
-      })
-
+      // const newAppsArray = apps.map(app => {
+      //   if (app._id === updateApp._id) {
+      //     return appRoles
+      //   }
+      //   return app
+      // })
       cache.writeQuery({
         query: ALL_APPS_QUERY,
-        data: { apps: _.sortBy(newAppsArray, ['app']) }
+        data: { apps: _.sortBy(apps, ['app']) }
       })
-      setFilteredApps(_.sortBy(newAppsArray, ['app']))
+      setFilteredApps(_.sortBy(apps, ['app']))
+    }
+  })
+
+  const [updateAppUrlFromDB, updatedApp] = useMutation(UPDATE_APP_URL, {
+    update (cache, { data: { updatedApp } }) {
+      const { apps } = cache.readQuery({ query: ALL_APPS_QUERY })
+      cache.writeQuery({
+        query: ALL_APPS_QUERY,
+        data: { apps: _.sortBy(apps, ['app']) }
+      })
+      setFilteredApps(_.sortBy(apps, ['app']))
     }
   })
 
@@ -230,11 +236,29 @@ const Apps = props => {
     deleteAppFromDB(input)
   }
 
-  const onSubmitEditApp = input => {
+  const onAddRoleToApp = input => {
     // console.log('input', input)
-    setModal({ state: false, Component: null })
+    // setModal({ state: false, Component: null })
     // deleteAppFromDB(input)
-    console.log('onSubmitEditApp inpu', input)
+    console.log('onAddRoleToApp input', input)
+    updateAppRolesFromDB(input)
+  }
+
+  const onUpdateUrl = input => {
+    // console.log('input', input)
+    // setModal({ state: false, Component: null })
+    // deleteAppFromDB(input)
+    console.log('onUpdateUrl input', input)
+    updateAppUrlFromDB(input)
+  }
+
+  const onDeleteRoleFromApp = input => {
+    // console.log('input', input)
+    // setModal({ state: false, Component: null })
+    // deleteAppFromDB(input)
+    console.log('onDeleteRoleFromApp input', input)
+
+    updateAppRolesFromDB(input)
   }
 
   const addAppHandler = () => {
@@ -257,7 +281,14 @@ const Apps = props => {
     setModal({
       state: true,
       Component: (
-        <EditApp onCancel={onCancel} onSubmit={onSubmitEditApp} app={app} />
+        <EditApp
+          onCancel={onCancel}
+          onAddRoleToApp={onAddRoleToApp}
+          onDeleteRoleFromApp={onDeleteRoleFromApp}
+          onUpdateUrl={onUpdateUrl}
+          // onSubmit={onSubmitEditApp}
+          app={app}
+        />
       )
     })
   }
