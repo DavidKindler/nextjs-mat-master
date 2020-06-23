@@ -52,13 +52,9 @@ const Apps = props => {
   const [deleteAppFromDB, deleteApp] = useMutation(DELETE_APP, {
     update (cache, { data: { deleteApp } }) {
       const { apps } = cache.readQuery({ query: ALL_APPS_QUERY })
-
-      // console.log('deleteApp', deleteApp)
       const newAppsArray = _.remove(apps, function (n) {
         return n._id !== deleteApp._id
       })
-      // console.log('newAppsArray', _.sortBy(newAppsArray, ['app']))
-
       cache.writeQuery({
         query: ALL_APPS_QUERY,
         data: { apps: _.sortBy(newAppsArray, ['app']) }
@@ -70,12 +66,7 @@ const Apps = props => {
   const [updateAppRolesFromDB] = useMutation(UPDATE_APP_ROLES, {
     update (cache, { data: { updateApp } }) {
       const { apps } = cache.readQuery({ query: ALL_APPS_QUERY })
-      // const newAppsArray = apps.map(app => {
-      //   if (app._id === updateApp._id) {
-      //     return appRoles
-      //   }
-      //   return app
-      // })
+
       cache.writeQuery({
         query: ALL_APPS_QUERY,
         data: { apps: _.sortBy(apps, ['app']) }
@@ -97,10 +88,6 @@ const Apps = props => {
 
   const ALL_APPS = loading ? [] : data.apps
 
-  // console.log('data', data)
-  // console.log('apps', apps)
-  // console.log('roles', roles)
-  // console.log('filteredApps', filteredApps)
   const columns = [
     {
       title: 'app',
@@ -181,7 +168,7 @@ const Apps = props => {
               onClick={() => {
                 // editApp(record)
                 editAppHandler(record)
-                console.log(record)
+                // console.log(record)
               }}
               color={'cyan'}
             >
@@ -226,38 +213,24 @@ const Apps = props => {
     setModal({ state: false, Component: null })
   }
   const onSubmitAddApp = input => {
-    // console.log('input', input)
     setModal({ state: false, Component: null })
     addAppToDB(input)
   }
   const onSubmitDeleteApp = input => {
-    // console.log('input', input)
     setModal({ state: false, Component: null })
     deleteAppFromDB(input)
   }
 
   const onAddRoleToApp = input => {
-    // console.log('input', input)
-    // setModal({ state: false, Component: null })
-    // deleteAppFromDB(input)
-    console.log('onAddRoleToApp input', input)
+    // console.log('onaddroletoapp', input)
     updateAppRolesFromDB(input)
   }
 
   const onUpdateUrl = input => {
-    // console.log('input', input)
-    // setModal({ state: false, Component: null })
-    // deleteAppFromDB(input)
-    console.log('onUpdateUrl input', input)
     updateAppUrlFromDB(input)
   }
 
   const onDeleteRoleFromApp = input => {
-    // console.log('input', input)
-    // setModal({ state: false, Component: null })
-    // deleteAppFromDB(input)
-    console.log('onDeleteRoleFromApp input', input)
-
     updateAppRolesFromDB(input)
   }
 
@@ -286,7 +259,6 @@ const Apps = props => {
           onAddRoleToApp={onAddRoleToApp}
           onDeleteRoleFromApp={onDeleteRoleFromApp}
           onUpdateUrl={onUpdateUrl}
-          // onSubmit={onSubmitEditApp}
           app={app}
         />
       )

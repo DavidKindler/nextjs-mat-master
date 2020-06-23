@@ -152,9 +152,11 @@ const resolvers = {
       return { deleted: !!x, ...input }
     },
     updateAppRoles: async (_parent, { input }, _context) => {
+      var r = input.roles.map(role => role.toUpperCase())
+      var uniqueRoles = Array.from(new Set(r))
       let x = await _context.db.update(
         { _id: input._id },
-        { $set: { roles: input.roles } },
+        { $set: { roles: uniqueRoles } },
         { returnUpdatedDocs: true }
       )
       return x
